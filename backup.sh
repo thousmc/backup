@@ -1,6 +1,6 @@
 #!/bin/bash
 
-commands=("advertise" "aws" "cat" "date" "echo" "exit" "grep" "mkdir" "ping" "rm" "sleep" "tar" "tmux" "touch")
+commands=("advertise" "aws" "basename" "cat" "date" "echo" "exit" "grep" "mkdir" "ping" "rm" "sleep" "tar" "tmux" "touch")
 
 for cmd in "${commands[@]}"; do
     if ! command -v "$cmd" &> /dev/null; then
@@ -21,6 +21,7 @@ date_filename=$(date +%Y-%m-%d-%H-%M-%S-%3N)
 start_time=$(date +%s)
 backup_directory=$XDG_DATA_HOME/thousmc/backup/backups
 backup_file=$backup_directory/thousmc-${date_filename}.tar.gz
+backup_file_basename=$(basename $backup_file)
 backup_name_count_file=$XDG_DATA_HOME/thousmc/backup/backupnamecount.txt
 tmux_session=0
 thousmc=/home/lcd/thousmc
@@ -61,7 +62,7 @@ if $ARE_PLAYERS; then tmux send-keys -t $tmux_session 'tellraw @a {"text":"Serve
 tmux send-keys -t $tmux_session 'save-off' Enter
 echo "\"save-off\" ran..."
 rm -v $backup_directory/*
-tar czWf $backup_file /home/lcd/thousmc
+tar czf $backup_file /home/lcd/thousmc
 tmux send-keys -t $tmux_session 'save-on' Enter
 echo "\"save-on\" ran..."
 
@@ -76,11 +77,11 @@ if $ARE_PLAYERS; then
     tmux send-keys -t $tmux_session 'tellraw @a {"text":"Server has been backed up!","color":"gold"}' Enter
     tmux send-keys -t $tmux_session "tellraw @a [\"\",{\"text\":\"Backup took\",\"color\":\"gray\"},{\"text\":\" $hours\",\"color\":\"gold\"},{\"text\":\":\",\"color\":\"gray\"},{\"text\":\"$minutes\",\"color\":\"gold\"},{\"text\":\":\",\"color\":\"gray\"},{\"text\":\"$seconds\",\"color\":\"gold\"},{\"text\":\" with a filesize of\",\"color\":\"gray\"},{\"text\":\" $filesize GiB\",\"color\":\"gold\"},{\"text\":\".\",\"color\":\"gray\"}]" Enter
 fi
-echo "Creation of \"$backup_file\" took $hours:$minutes:$seconds with a filesize of $filesize GiB."
+echo "Creation of \"$backup_file_basename\" took $hours:$minutes:$seconds with a filesize of $filesize GiB."
 
-echo "Copying \"$backup_file\" to NAS server..."
+echo "Copying \"$backup_file_basename\" to NAS server..."
 rsync --checksum -a $backup_file thou@10.0.0.179:/mnt/main/thouset/thou/backups/serverBackups/newBackups/
-echo "\"$backup_file\" copied to NAS server."
+echo "\"$backup_file_basename\" copied to NAS server."
 echo thousmc-${date_filename}.tar.gz >> $backup_name_count_file
 echo "\"$backup_name_count_file\" updated."
 
@@ -90,10 +91,11 @@ if ! aws s3api head-bucket --bucket $s3_bucket &> /dev/null; then
 fi
 
 if (( $(wc -l $backup_name_count_file | awk '{print $1}') % 7 == 0)); then
-    echo "This is backup #$(wc -l $backup_name_count_file). Copying \"$backup_file\" to AWS S3..."
+    echo "This is backup #$(wc -l $backup_name_count_file). Copying \"$backup_file_basename\" to AWS S3..."
     aws s3 cp $backup_file s3://$s3_bucket --storage-class DEEP_ARCHIVE
-    echo "\"$backup_file\" copied to AWS S3."
+    echo "\"$backup_file_basename\" copied to AWS S3."
 else
-    echo "This is backup #$(wc -l $backup_name_count_file). AWS S3 backup skipped."
+    echo "This is backup #$(wc -l $backup_name_count_file | awk \"{print $1}\"). AWS S3 backup skipped."
+fi
 
 exit 0
