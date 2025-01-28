@@ -4,10 +4,9 @@ date_filename=$(date +%Y-%m-%d-%H-%M-%S-%3N)
 start_time=$(date +%s)
 backup_directory=$XDG_DATA_HOME/thousmc/backup
 backup_file=$backup_directory/thousmc-${date_filename}.tar.gz
-advertise_dir=$HOME/docs/software/code/python/advertise/advertise.py  # ill have to change this for each implementation
 tmux_session=0
 
-if python3 $advertise_dir -a play.thousmc.xyz -s | grep -q 'True'; then
+if advertise -a play.thousmc.xyz -s | grep -q 'True'; then
     ARE_PLAYERS=true
 else
     ARE_PLAYERS=false
