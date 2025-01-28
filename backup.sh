@@ -1,19 +1,19 @@
 #!/bin/bash
 
-commands=("advertise" "aws" "date" "echo" "exit" "grep" "mkdir" "ping" "rm" "sleep" "tar" "tmux" "touch")
+commands=("advertise" "aws" "cat" "date" "echo" "exit" "grep" "mkdir" "ping" "rm" "sleep" "tar" "tmux" "touch")
 
 for cmd in "${commands[@]}"; do
     if ! command -v "$cmd" &> /dev/null; then
-        echo "Error: $cmd is not installed. Skipping backup."
+        echo "Error: \"$cmd\" is not installed. Skipping backup."
         exit 1
     else
-        echo "$cmd is installed."
+        echo "\"$cmd\" is installed."
     fi
 done
 echo "All required commands are installed."
 
 if ! ping -c 1 google.com &> /dev/null; then
-    echo 'Error: No internet connection detected. Skipping backup.'
+    echo "Error: No internet connection detected. Skipping backup."
     exit 1
 fi
 
@@ -24,6 +24,7 @@ backup_file=$backup_directory/thousmc-${date_filename}.tar.gz
 backup_name_count_file=$XDG_DATA_HOME/thousmc/backup/backupnamecount.txt
 tmux_session=0
 thousmc=/home/lcd/thousmc
+s3_bucket=$(cat $XDG_CONFIG_HOME/thousmcbackupsbucketname.txt)
 
 if advertise -a play.thousmc.xyz -s | grep -q 'True'; then
     ARE_PLAYERS=true
@@ -32,7 +33,7 @@ else
 fi
 
 if ! grep -qE "joined the server|left the server" ~/thousmc/logs/latest.log; then
-    echo "No player activity detected today. Backup skipped."
+    echo "No player activity detected today. Skipping backup."
     exit 0
 fi
 
@@ -46,10 +47,11 @@ fi
 saving=true
 while $saving; do
     if ! tmux capture-pane -pt 0 -S 10 | grep -q 'Saved the game'; then
-        echo 'Waiting for game to save...'
+        echo "Waiting for game to save..."
         sleep 5
     else
-        echo '"Saved the game" found! Running "save-off" for backup after 5 minute wait...'
+        echo "\"Saved the game\" found!"
+        echo "Running \"save-off\" for backup after 5 minute wait..."
         sleep 300  # waiting 5 minutes to account for file write lies
         saving=false
     fi
@@ -57,18 +59,18 @@ done
 
 if $ARE_PLAYERS; then tmux send-keys -t $tmux_session 'tellraw @a {"text":"Server is now backing up...","color":"gold"}' Enter; fi
 tmux send-keys -t $tmux_session 'save-off' Enter
-echo '"save-off" ran...'
+echo "\"save-off\" ran..."
 rm -v $backup_directory/*
-tar czf $backup_file /home/lcd/thousmc
+tar czWf $backup_file /home/lcd/thousmc
 tmux send-keys -t $tmux_session 'save-on' Enter
-echo '"save-on" ran...'
+echo "\"save-on\" ran..."
 
 end_time=$(date +%s)
 elapsed_time=$(($end_time - $start_time))
-filesize=$(stat --format="%s" "$backup_file" | awk '{printf "%.1f", $1 / 1024 / 1024 / 1024}')
 hours=$(printf "%02d" $((elapsed_time / 3600)))
 minutes=$(printf "%02d" $(((elapsed_time % 3600) / 60)))
 seconds=$(printf "%02d" $((elapsed_time % 60)))
+filesize=$(stat --format="%s" "$backup_file" | awk '{printf "%.1f", $1 / 1024 / 1024 / 1024}')
 
 if $ARE_PLAYERS; then
     tmux send-keys -t $tmux_session 'tellraw @a {"text":"Server has been backed up!","color":"gold"}' Enter
@@ -76,9 +78,21 @@ if $ARE_PLAYERS; then
 fi
 echo "Creation of \"$backup_file\" took $hours:$minutes:$seconds with a filesize of $filesize GiB."
 
+echo "Copying \"$backup_file\" to NAS server..."
 rsync --checksum -a $backup_file thou@10.0.0.179:/mnt/main/thouset/thou/backups/serverBackups/newBackups/
-echo 'Backup copied to NAS server.'
+echo "\"$backup_file\" copied to NAS server."
 echo thousmc-${date_filename}.tar.gz >> $backup_name_count_file
 echo "\"$backup_name_count_file\" updated."
+
+if ! aws s3api head-bucket --bucket $s3_bucket &> /dev/null; then
+    echo "Error: No access to S3 bucket \"$s3_bucket\"."
+    exit 1
+fi
+
+if (( $(wc -l $backup_name_count_file) % 7 == 0)); then
+    echo "Copying \"$backup_file\" to AWS S3..."
+    aws s3 cp $backup_file s3://$s3_bucket --storage-class DEEP_ARCHIVE
+    echo "\"$backup_file\" copied to AWS S3."
+fi
 
 exit 0
