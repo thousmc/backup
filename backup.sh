@@ -4,7 +4,7 @@ commands=("advertise" "aws" "cat" "date" "echo" "exit" "grep" "mkdir" "ping" "rm
 
 for cmd in "${commands[@]}"; do
     if ! command -v "$cmd" &> /dev/null; then
-        echo "Error: \"$cmd\" is not installed. Skipping backup."
+        echo "Error: \"$cmd\" is not installed. Backup skipped."
         exit 1
     else
         echo "\"$cmd\" is installed."
@@ -13,7 +13,7 @@ done
 echo "All required commands are installed."
 
 if ! ping -c 1 google.com &> /dev/null; then
-    echo "Error: No internet connection detected. Skipping backup."
+    echo "Error: No internet connection detected. Backup skipped."
     exit 1
 fi
 
@@ -33,7 +33,7 @@ else
 fi
 
 if ! grep -qE "joined the server|left the server" ~/thousmc/logs/latest.log; then
-    echo "No player activity detected today. Skipping backup."
+    echo "No player activity detected today. Backup skipped."
     exit 0
 fi
 
@@ -89,10 +89,11 @@ if ! aws s3api head-bucket --bucket $s3_bucket &> /dev/null; then
     exit 1
 fi
 
-if (( $(wc -l $backup_name_count_file) % 7 == 0)); then
-    echo "Copying \"$backup_file\" to AWS S3..."
+if (( $(wc -l $backup_name_count_file | awk '{print $1}') % 7 == 0)); then
+    echo "This is backup #$(wc -l $backup_name_count_file). Copying \"$backup_file\" to AWS S3..."
     aws s3 cp $backup_file s3://$s3_bucket --storage-class DEEP_ARCHIVE
     echo "\"$backup_file\" copied to AWS S3."
-fi
+else
+    echo "This is backup #$(wc -l $backup_name_count_file). AWS S3 backup skipped."
 
 exit 0
