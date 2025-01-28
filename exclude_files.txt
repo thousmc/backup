@@ -1,0 +1,15 @@
+$thousmc/world/playerdata
+$thousmc/world/advancements
+$thousmc/world/stats
+$thousmc/world_nether/playerdata
+$thousmc/world_nether/level.dat
+$thousmc/world_nether/level.dat_old
+$thousmc/world_nether/paper-world.yml
+$thousmc/world_nether/session.lock
+$thousmc/world_nether/uid.dat
+$thousmc/world_the_end/playerdata
+$thousmc/world_the_end/level.dat
+$thousmc/world_the_end/level.dat_old
+$thousmc/world_the_end/paper-world.yml
+$thousmc/world_the_end/session.lock
+$thousmc/world_the_end/uid.dat
