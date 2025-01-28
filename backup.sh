@@ -1,9 +1,27 @@
 #!/bin/bash
 
+commands=("advertise" "aws" "date" "echo" "exit" "grep" "mkdir" "ping" "rm" "sleep" "tar" "tmux" "touch")
+
+for cmd in "${commands[@]}"; do
+    if ! command -v "$cmd" &> /dev/null; then
+        echo "Error: $cmd is not installed. Skipping backup."
+        exit 1
+    else
+        echo "$cmd is installed."
+    fi
+done
+echo "All required commands are installed."
+
+if ! ping -c 1 google.com &> /dev/null; then
+    echo 'Error: No internet connection detected. Skipping backup.'
+    exit 1
+fi
+
 date_filename=$(date +%Y-%m-%d-%H-%M-%S-%3N)
 start_time=$(date +%s)
-backup_directory=$XDG_DATA_HOME/thousmc/backup
+backup_directory=$XDG_DATA_HOME/thousmc/backup/backups
 backup_file=$backup_directory/thousmc-${date_filename}.tar.gz
+backup_name_count_file=$XDG_DATA_HOME/thousmc/backup/backupnamecount.txt
 tmux_session=0
 thousmc=/home/lcd/thousmc
 
@@ -15,13 +33,16 @@ fi
 
 if ! grep -qE "joined the server|left the server" ~/thousmc/logs/latest.log; then
     echo "No player activity detected today. Backup skipped."
-    exit 1
+    exit 0
 fi
 
 echo "Player activity detected today. Running backup..."
 tmux send-keys -t $tmux_session 'save-all' Enter
 echo "Saving the game..."
 mkdir -p $backup_directory
+if [ ! -f $backup_name_count_file ]; then
+  touch $backup_name_count_file
+fi
 saving=true
 while $saving; do
     if ! tmux capture-pane -pt 0 -S 10 | grep -q 'Saved the game'; then
@@ -53,7 +74,11 @@ if $ARE_PLAYERS; then
     tmux send-keys -t $tmux_session 'tellraw @a {"text":"Server has been backed up!","color":"gold"}' Enter
     tmux send-keys -t $tmux_session "tellraw @a [\"\",{\"text\":\"Backup took\",\"color\":\"gray\"},{\"text\":\" $hours\",\"color\":\"gold\"},{\"text\":\":\",\"color\":\"gray\"},{\"text\":\"$minutes\",\"color\":\"gold\"},{\"text\":\":\",\"color\":\"gray\"},{\"text\":\"$seconds\",\"color\":\"gold\"},{\"text\":\" with a filesize of\",\"color\":\"gray\"},{\"text\":\" $filesize GiB\",\"color\":\"gold\"},{\"text\":\".\",\"color\":\"gray\"}]" Enter
 fi
-echo "Creation of \"$backup_file\" took $hours:$minutes:$seconds with a filesize of $filesize\GiB."
+echo "Creation of \"$backup_file\" took $hours:$minutes:$seconds with a filesize of $filesize GiB."
 
 rsync --checksum -a $backup_file thou@10.0.0.179:/mnt/main/thouset/thou/backups/serverBackups/newBackups/
 echo 'Backup copied to NAS server.'
+echo thousmc-${date_filename}.tar.gz >> $backup_name_count_file
+echo "\"$backup_name_count_file\" updated."
+
+exit 0
