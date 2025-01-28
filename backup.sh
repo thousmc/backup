@@ -36,15 +36,17 @@ done
 if $ARE_PLAYERS; then tmux send-keys -t $TMUX_SESSION 'tellraw @a {"text":"Server is now backing up...","color":"gold"}' Enter; fi
 tmux send-keys -t $TMUX_SESSION 'save-off' Enter
 echo '"save-off" ran...'
-tar czvf $BACKUP_FILE /home/lcd/thousmc
+rm -v $BACKUP_DIRECTORY/*
+tar czf $BACKUP_FILE /home/lcd/thousmc
 tmux send-keys -t $TMUX_SESSION 'save-on' Enter
 echo '"save-on" ran...'
 
-filesize=stat --format="%s" $BACKUP_FILE | awk '{printf "%.1f\n", $1 / (1024 * 1024 * 1024)}'
-elapsed_time=$(date +%s)
-hours=$((elapsed_time / 3600))
-minutes=$(((elapsed_time % 3600) / 60))
-seconds=$((elapsed_time % 60))
+end_time=$(date +%s)
+elapsed_time=$(($end_time - $START_TIME))
+filesize=$(stat --format="%s" "$BACKUP_FILE" | awk '{printf "%.1f\n", $1 / 1024}')
+hours=$(($elapsed_time / 3600))
+minutes=$((($elapsed_time % 3600) / 60))
+seconds=$(($elapsed_time % 60))
 
 if $ARE_PLAYERS; then
     tmux send-keys -t $TMUX_SESSION 'tellraw @a {"text":"Server has been backed up!","color":"gold"}' Enter
@@ -53,3 +55,4 @@ fi
 echo "Creation of \"$BACKUP_FILE\" took $hours:$minutes:$seconds with a filesize of $filesize\GiB."
 
 rsync --checksum -a $BACKUP_FILE thou@10.0.0.179:/mnt/main/thouset/thou/backups/serverBackups/newBackups/
+echo 'Backup copied to NAS server.'
