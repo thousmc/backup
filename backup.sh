@@ -44,10 +44,10 @@ echo '"save-on" ran...'
 
 end_time=$(date +%s)
 elapsed_time=$(($end_time - $start_time))
-filesize=$(stat --format="%s" "$backup_file" | awk '{printf "%.1f\n", $1 / 1024}')
-hours=$(($elapsed_time / 3600))
-minutes=$((($elapsed_time % 3600) / 60))
-seconds=$(($elapsed_time % 60))
+filesize=$(stat --format="%s" "$backup_file" | awk '{printf "%.1f", $1 / 1024 / 1024 / 1024}')
+hours=$(printf "%02d" $((elapsed_time / 3600)))
+minutes=$(printf "%02d" $(((elapsed_time % 3600) / 60)))
+seconds=$(printf "%02d" $((elapsed_time % 60)))
 
 if $ARE_PLAYERS; then
     tmux send-keys -t $tmux_session 'tellraw @a {"text":"Server has been backed up!","color":"gold"}' Enter
