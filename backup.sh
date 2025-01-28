@@ -5,6 +5,7 @@ start_time=$(date +%s)
 backup_directory=$XDG_DATA_HOME/thousmc/backup
 backup_file=$backup_directory/thousmc-${date_filename}.tar.gz
 tmux_session=0
+thousmc=/home/lcd/thousmc
 
 if advertise -a play.thousmc.xyz -s | grep -q 'True'; then
     ARE_PLAYERS=true
@@ -27,7 +28,8 @@ while $saving; do
         echo 'Waiting for game to save...'
         sleep 5
     else
-        echo '"Saved the game" found! Running "save-off" for backup...'
+        echo '"Saved the game" found! Running "save-off" for backup after 5 minute wait...'
+        sleep 300  # waiting 5 minutes to account for file write lies
         saving=false
     fi
 done
