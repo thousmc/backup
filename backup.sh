@@ -95,7 +95,7 @@ if (( $(wc -l $backup_name_count_file | awk '{print $1}') % 7 == 0)); then
     aws s3 cp $backup_file s3://$s3_bucket --storage-class DEEP_ARCHIVE
     echo "\"$backup_file_basename\" copied to AWS S3."
 else
-    echo "This is backup #$(wc -l $backup_name_count_file | awk \"{print $1}\"). AWS S3 backup skipped."
+    echo "This is backup #$(wc -l $backup_name_count_file | awk '{print $1}'), which isn't divisible by 7. AWS S3 backup skipped."
 fi
 
 exit 0
