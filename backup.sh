@@ -25,7 +25,7 @@ backup_file_basename=$(basename $backup_file)
 backup_name_count_file=$XDG_DATA_HOME/thousmc/backup/backupnamecount.txt
 tmux_session=0
 s3_bucket=$(cat $XDG_CONFIG_HOME/thousmcbackupsbucketname.txt)
-export thousmc=/home/lcd/thousmc
+thousmc="/home/lcd/thousmc"
 
 if advertise -a play.thousmc.xyz -s | grep -q 'True'; then
     ARE_PLAYERS=true
