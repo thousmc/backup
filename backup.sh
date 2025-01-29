@@ -52,8 +52,8 @@ while $saving; do
         sleep 5
     else
         echo "\"Saved the game\" found!"
-        echo "Running \"save-off\" for backup after 5 minute wait..."
-        sleep 300  # waiting 5 minutes to account for file write lies
+        echo "Running \"save-off\" for backup after 1 minute wait..."
+        sleep 60  # waiting 1 minute to account for file write lies
         saving=false
     fi
 done
@@ -62,7 +62,7 @@ if $ARE_PLAYERS; then tmux send-keys -t $tmux_session 'tellraw @a {"text":"Serve
 tmux send-keys -t $tmux_session 'save-off' Enter
 echo "\"save-off\" ran..."
 rm -v $backup_directory/*
-tar czf --files-from="backup_priority.txt" --exclude-from="exclude_files.txt" $backup_file $thousmc
+tar czf $backup_file --files-from="backup_priority.txt" --exclude-from="exclude_files.txt" $thousmc
 tmux send-keys -t $tmux_session 'save-on' Enter
 echo "\"save-on\" ran..."
 
