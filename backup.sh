@@ -28,9 +28,9 @@ s3_bucket=$(cat $XDG_CONFIG_HOME/thousmcbackupsbucketname.txt)
 thousmc="/home/lcd/thousmc"
 
 if advertise -a play.thousmc.xyz -s | grep -q 'True'; then
-    ARE_PLAYERS=true
+    are_players=true
 else
-    ARE_PLAYERS=false
+    are_players=false
 fi
 
 if ! grep -qE "joined the server|left the server" ~/thousmc/logs/latest.log; then
@@ -47,7 +47,7 @@ if [ ! -f $backup_name_count_file ]; then
 fi
 saving=true
 while $saving; do
-    if ! tmux capture-pane -pt 0 -S 10 | grep -q 'Saved the game'; then
+    if ! tmux capture-pane -pt $tmux_session -S 10 | grep -q 'Saved the game'; then
         echo "Waiting for game to save..."
         sleep 5
     else
@@ -58,11 +58,11 @@ while $saving; do
     fi
 done
 
-if $ARE_PLAYERS; then tmux send-keys -t $tmux_session 'tellraw @a {"text":"Server is now backing up...","color":"gold"}' Enter; fi
+if $are_players; then tmux send-keys -t $tmux_session 'tellraw @a {"text":"Server is now backing up...","color":"gold"}' Enter; fi
 tmux send-keys -t $tmux_session 'save-off' Enter
 echo "\"save-off\" ran..."
 rm -v $backup_directory/*
-tar czf $backup_file --files-from="backup_priority.txt" --exclude-from="exclude_files.txt" $thousmc
+tar czf $backup_file $thousmc
 tmux send-keys -t $tmux_session 'save-on' Enter
 echo "\"save-on\" ran..."
 
@@ -73,7 +73,7 @@ minutes=$(printf "%02d" $(((elapsed_time % 3600) / 60)))
 seconds=$(printf "%02d" $((elapsed_time % 60)))
 filesize=$(stat --format="%s" "$backup_file" | awk '{printf "%.1f", $1 / 1024 / 1024 / 1024}')
 
-if $ARE_PLAYERS; then
+if $are_players; then
     tmux send-keys -t $tmux_session 'tellraw @a {"text":"Server has been backed up!","color":"gold"}' Enter
     tmux send-keys -t $tmux_session "tellraw @a [\"\",{\"text\":\"Backup took\",\"color\":\"gray\"},{\"text\":\" $hours\",\"color\":\"gold\"},{\"text\":\":\",\"color\":\"gray\"},{\"text\":\"$minutes\",\"color\":\"gold\"},{\"text\":\":\",\"color\":\"gray\"},{\"text\":\"$seconds\",\"color\":\"gold\"},{\"text\":\" with a filesize of\",\"color\":\"gray\"},{\"text\":\" $filesize GiB\",\"color\":\"gold\"},{\"text\":\".\",\"color\":\"gray\"}]" Enter
 fi
@@ -84,6 +84,8 @@ rsync --checksum -a $backup_file thou@10.0.0.179:/mnt/main/thouset/thou/backups/
 echo "\"$backup_file_basename\" copied to NAS server."
 echo thousmc-${date_filename}.tar.gz >> $backup_name_count_file
 echo "\"$backup_name_count_file\" updated."
+
+./restart30.sh &
 
 if ! aws s3api head-bucket --bucket $s3_bucket &> /dev/null; then
     echo "Error: No access to S3 bucket \"$s3_bucket\"."
