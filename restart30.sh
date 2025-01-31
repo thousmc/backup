@@ -106,7 +106,8 @@ if $(advertise -a play.thousmc.xyz -s | grep -q 'True'); then
     sleep 0.1
     tmux send-keys -t $tmux_session 'playsound block.note_block.harp master @a ~ ~ ~ 1 2 1' Enter
     sleep 0.1
-    tmux send-keys -t $tmux_session '§6Server is restarting. Please rejoin in 1 minute.' Enter
+    tmux send-keys -t $tmux_session 'kick @a §6Server is restarting. Please rejoin in 1 minute.' Enter
+    sleep 1
 fi
 
 tmux send-keys -t $tmux_session 'stop' Enter
