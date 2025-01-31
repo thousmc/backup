@@ -1,6 +1,6 @@
 #!/bin/bash
 
-commands=("advertise" "aws" "basename" "cat" "date" "echo" "exit" "grep" "mkdir" "pigz""ping" "rm" "sleep" "tar" "tmux" "touch")
+commands=("advertise" "aws" "basename" "cat" "date" "echo" "exit" "grep" "mkdir" "pigz" "ping" "rm" "sleep" "tar" "tmux" "touch")
 
 for cmd in "${commands[@]}"; do
     if ! command -v "$cmd" &> /dev/null; then
