@@ -1,6 +1,6 @@
 #!/bin/bash
 
-commands=("advertise" "aws" "basename" "cat" "date" "echo" "exit" "grep" "mkdir" "ping" "rm" "sleep" "tar" "tmux" "touch")
+commands=("advertise" "aws" "basename" "cat" "date" "echo" "exit" "grep" "mkdir" "pigz""ping" "rm" "sleep" "tar" "tmux" "touch")
 
 for cmd in "${commands[@]}"; do
     if ! command -v "$cmd" &> /dev/null; then
@@ -62,7 +62,7 @@ if $are_players; then tmux send-keys -t $tmux_session 'tellraw @a {"text":"Serve
 tmux send-keys -t $tmux_session 'save-off' Enter
 echo "\"save-off\" ran..."
 rm -v $backup_directory/*
-tar czf $backup_file $thousmc
+tar -cf - $thousmc | pigz > $backup_file
 tmux send-keys -t $tmux_session 'save-on' Enter
 echo "\"save-on\" ran..."
 
