@@ -22,7 +22,7 @@ start_time=$(date +%s)
 backup_directory=$XDG_DATA_HOME/thousmc/backup/backups
 backup_file=$backup_directory/thousmc-${date_filename}.tar.gz
 backup_file_basename=$(basename $backup_file)
-backup_name_count_file=$XDG_DATA_HOME/thousmc/backup/backupnamecount.txt
+backup_name_count_file=$XDG_STATE_HOME/thousmc/backup/backupnamecount.txt
 tmux_session=0
 s3_bucket=$(cat $XDG_CONFIG_HOME/thousmcbackupsbucketname.txt)
 thousmc="/home/lcd/thousmc"
@@ -43,6 +43,7 @@ tmux send-keys -t $tmux_session 'save-all' Enter
 echo "Saving the game..."
 mkdir -p $backup_directory
 if [ ! -f $backup_name_count_file ]; then
+  mkdir -p $XDG_STATE_HOME/thousmc/backup
   touch $backup_name_count_file
 fi
 saving=true
