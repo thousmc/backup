@@ -17,6 +17,11 @@ if ! ping -c 1 google.com &> /dev/null; then
     exit 1
 fi
 
+# i added these as a test to see if it makes cron read the XDG environment variables correctly. will be removed if not
+XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
+XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}
+XDG_STATE_HOME=${XDG_STATE_HOME:-$HOME/.local/state}
+
 date_filename=$(date +%Y-%m-%d-%H-%M-%S-%3N)
 start_time=$(date +%s)
 backup_directory=$XDG_DATA_HOME/thousmc/backup/backups
@@ -25,7 +30,7 @@ backup_file_basename=$(basename $backup_file)
 backup_name_count_file=$XDG_STATE_HOME/thousmc/backup/backupnamecount.txt
 tmux_session=0
 s3_bucket=$(cat $XDG_CONFIG_HOME/thousmcbackupsbucketname.txt)
-thousmc="/home/lcd/thousmc"
+thousmc="$HOME/thousmc"
 
 if advertise -a play.thousmc.xyz -s | grep -q 'True'; then
     are_players=true
