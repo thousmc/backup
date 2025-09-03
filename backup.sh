@@ -68,7 +68,7 @@ if $are_players; then tmux send-keys -t $tmux_session 'tellraw @a {"text":"Serve
 tmux send-keys -t $tmux_session 'save-off' Enter
 echo "\"save-off\" ran..."
 rm -v $backup_directory/*
-tar -cf - $thousmc | pigz > $backup_file
+tar -C $HOME --transform="s,^thousmc,thousmc-${date_filename}," -cf - thousmc | pigz > $backup_file
 tmux send-keys -t $tmux_session 'save-on' Enter
 echo "\"save-on\" ran..."
 
